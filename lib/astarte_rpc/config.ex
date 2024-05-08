@@ -61,7 +61,7 @@ defmodule Astarte.RPC.Config do
     required: true
 
   @envdoc """
-  Max length of the server AMQP queue. If 0 the queue will be unbounded, otherwise it will be limited to tha    t length and new publishes will be dropped while the queue is full. WARNING: changing this value requires manually     deleting the queue
+  Max length of the server AMQP queue. If 0 the queue will be unbounded, otherwise it will be limited to that length and new publishes will be dropped while the queue is full. WARNING: changing this value requires manually     deleting the queue
   """
   app_env :amqp_queue_max_length, :astarte_rpc, :amqp_queue_max_length,
     os_env: "RPC_AMQP_QUEUE_MAX_LENGTH",
@@ -95,15 +95,15 @@ defmodule Astarte.RPC.Config do
     type: :binary
 
   @doc "The AMQP queue arguments."
-  @type argument :: {:"x-max-length", integer()} | {:"x-overflow", String.t()}
+  @type argument :: {:"x-max-length", integer(), :"x-queue-type", String.t() } | {:"x-overflow", String.t(), :"x-queue-type", String.t() }
   @spec amqp_queue_arguments!() :: [argument]
   def amqp_queue_arguments! do
     value = amqp_queue_max_length!()
 
     if value > 0 do
-      ["x-max-length": value, "x-overflow": "reject-publish"]
+      ["x-max-length": value, "x-overflow": "reject-publish", "x-queue-type": "quorum"]
     else
-      []
+      ["x-queue-type": "quorum"]
     end
   end
 

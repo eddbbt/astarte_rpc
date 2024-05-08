@@ -26,7 +26,7 @@ defmodule Astarte.RPC.AMQPTest do
     amqp_options = Config.amqp_options!()
     {:ok, conn} = AMQP.Connection.open(amqp_options)
     {:ok, chan} = AMQP.Channel.open(conn)
-    AMQP.Queue.declare(chan, @test_queue)
+    AMQP.Queue.declare(chan, @test_queue,[ durable: true, arguments: ["x-queue-type": "quorum"]])
     Astarte.RPC.AMQPTestEvalServer.start_link()
     Astarte.RPC.AMQPTestClient.start_link()
     # Wait for async connection
