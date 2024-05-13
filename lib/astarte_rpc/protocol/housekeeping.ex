@@ -17,5 +17,5 @@
 #
 
 defmodule Astarte.RPC.Protocol.Housekeeping do
-  use Astarte.RPC.Protocol, amqp_queue: "housekeeping_rpc"
+  use Astarte.RPC.Protocol, amqp_queue: "astarte_housekeeping_rpc"
 end

@@ -17,5 +17,5 @@
 #
 
 defmodule Astarte.RPC.Protocol.VMQ.Plugin do
-  use Astarte.RPC.Protocol, amqp_queue: "vmq_plugin_rpc"
+  use Astarte.RPC.Protocol, amqp_queue: "astarte_vmq_plugin_rpc"
 end
