@@ -17,5 +17,5 @@
 #
 
 defmodule Astarte.RPC.Protocol.Pairing do
-  use Astarte.RPC.Protocol, amqp_queue: "astarte_pairing_rpc"
+  use Astarte.RPC.Protocol, amqp_queue: "pairing_rpc"
 end

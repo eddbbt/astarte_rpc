@@ -17,5 +17,5 @@
 #
 
 defmodule Astarte.RPC.Protocol.RealmManagement do
-  use Astarte.RPC.Protocol, amqp_queue: "astarte_realm_management_rpc"
+  use Astarte.RPC.Protocol, amqp_queue: "realm_management_rpc"
 end
