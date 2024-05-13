@@ -78,11 +78,12 @@ defmodule Astarte.RPC.AMQP.Server do
   def handle_info({:basic_deliver, payload, meta}, state) do
     %{
       channel: chan,
-      handler: handler
+      handler: handler,
+      reply_queue: reply_queue
     } = state
 
     # We process the message asynchronously
-    spawn(fn -> handle(handler, chan, payload, meta) end)
+    spawn(fn -> handle(handler, chan, payload, meta, reply_queue) end)
 
     {:noreply, state}
   end
@@ -94,10 +95,10 @@ defmodule Astarte.RPC.AMQP.Server do
     {:noreply, Map.merge(state, connection_state)}
   end
 
-  defp handle(handler, chan, payload, meta) do
+  defp handle(handler, chan, payload, meta, reply_queue) do
     apply_handle_rpc(handler, payload)
     |> ack_or_reject(chan, meta.delivery_tag)
-    |> maybe_reply(chan, meta.reply_to, meta.correlation_id)
+    |> maybe_reply(chan, meta.reply_to, meta.correlation_id, reply_queue)
   end
 
   defp apply_handle_rpc(handler, payload) do
@@ -141,7 +142,7 @@ defmodule Astarte.RPC.AMQP.Server do
          {:ok, _consumer_tag} <- AMQP.Basic.consume(chan, queue_name),
          # Get notifications when the chan or conn go down
          Process.monitor(chan.pid) do
-      {:ok, %{channel: chan}}
+      {:ok, %{channel: chan, reply_queue: queue_name}}
     else
       {:error, reason} ->
         Logger.warn("RabbitMQ Connection error: " <> inspect(reason))
@@ -160,29 +161,29 @@ defmodule Astarte.RPC.AMQP.Server do
     Process.send_after(self(), :try_to_connect, backoff)
   end
 
-  defp maybe_reply(reply, _chan, :undefined, _correlation_id) do
+  defp maybe_reply(reply, _chan, :undefined, _correlation_id, _reply_queue) do
     Logger.warn("Got a reply but no queue to write it to: #{inspect(reply)}")
   end
 
-  defp maybe_reply({:ok, reply}, chan, reply_to, correlation_id) do
-    AMQP.Basic.publish(chan, "server_queue", reply_to, reply, correlation_id: correlation_id)
+  defp maybe_reply({:ok, reply}, chan, reply_to, correlation_id, reply_queue) do
+    AMQP.Basic.publish(chan, reply_queue, reply_to, reply, correlation_id: correlation_id)
   end
 
-  defp maybe_reply({:error, reason}, chan, reply_to, correlation_id) when is_binary(reason) do
-    AMQP.Basic.publish(chan, "server_queue", reply_to, "error:" <> reason, correlation_id: correlation_id)
+  defp maybe_reply({:error, reason}, chan, reply_to, correlation_id, reply_queue) when is_binary(reason) do
+    AMQP.Basic.publish(chan, reply_queue, reply_to, "error:" <> reason, correlation_id: correlation_id)
   end
 
-  defp maybe_reply({:error, reason}, chan, reply_to, correlation_id) when is_atom(reason) do
+  defp maybe_reply({:error, reason}, chan, reply_to, correlation_id, reply_queue) when is_atom(reason) do
     AMQP.Basic.publish(
       chan,
-      "",
+      reply_queue,
       reply_to,
       "error:" <> to_string(reason),
       correlation_id: correlation_id
     )
   end
 
-  defp maybe_reply(_result, _chan, _reply_to, _correlation_id) do
+  defp maybe_reply(_result, _chan, _reply_to, _correlation_id, _reply_queue) do
     :ok
   end
 end
