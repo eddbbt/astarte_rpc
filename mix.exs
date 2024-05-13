@@ -62,7 +62,8 @@ defmodule Astarte.RPC.Mixfile do
       {:excoveralls, "~> 0.15", only: :test},
       {:castore, "~> 0.1.0"},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:dialyzex, github: "Comcast/dialyzex", only: [:dev, :ci]}
+      {:dialyxir, "~> 1.4", only: [:dev, :ci], runtime: false},
+      { :uuid, "~> 1.1" } 
     ]
   end
 
