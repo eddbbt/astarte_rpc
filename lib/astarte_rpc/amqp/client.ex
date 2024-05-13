@@ -104,7 +104,7 @@ defmodule Astarte.RPC.AMQP.Client do
 
     prefixed_routing_key = prefix <> routing_key
 
-    AMQP.Basic.publish(chan, "", prefixed_routing_key, ser_payload)
+    AMQP.Basic.publish(chan, "server_queue", prefixed_routing_key, ser_payload)
     {:noreply, state}
   end
 
@@ -158,7 +158,7 @@ defmodule Astarte.RPC.AMQP.Client do
          {:ok, chan} <- AMQP.Channel.open(conn),
          :ok <- AMQP.Basic.qos(chan, prefetch_count: Config.amqp_prefetch_count!()),
          {:ok, %{queue: reply_queue}} <-
-           AMQP.Queue.declare(chan, "", [exclusive: true, auto_delete: true, durable: true, arguments: ["x-queue-type": "quorum"] ]),
+           AMQP.Queue.declare(chan, "server_queue", [exclusive: true, auto_delete: true, durable: true, arguments: ["x-queue-type": "quorum"] ]),
          {:ok, _consumer_tag} <- AMQP.Basic.consume(chan, reply_queue, self(), no_ack: true),
          # Get notifications when the chan or conn go down
          Process.monitor(chan.pid) do
