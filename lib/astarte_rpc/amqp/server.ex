@@ -41,10 +41,10 @@ defmodule Astarte.RPC.AMQP.Server do
     amqp_queue = Keyword.fetch!(opts, :amqp_queue)
     prefix = Keyword.get(opts, :amqp_prefix, "astarte_")
 
-    prefixed_queue = prefix <> amqp_queue
+    # prefixed_queue = prefix <> amqp_queue
 
     send(self(), :try_to_connect)
-    {:ok, %{channel: nil, handler: handler, queue_name: prefixed_queue}}
+    {:ok, %{channel: nil, handler: handler, queue_name: amqp_queue, prefix: prefix }}
   end
 
   def terminate(_reason, state) do
@@ -56,7 +56,7 @@ defmodule Astarte.RPC.AMQP.Server do
   end
 
   def handle_info(:try_to_connect, state) do
-    {:ok, connection_state} = connect(state.queue_name)
+    {:ok, connection_state} = connect(state.prefix <> state.queue_name)
     {:noreply, Map.merge(state, connection_state)}
   end
 
@@ -91,7 +91,7 @@ defmodule Astarte.RPC.AMQP.Server do
   # This callback should try to reconnect to the server
   def handle_info({:DOWN, _, :process, _pid, _reason}, state) do
     Logger.warn("RabbitMQ connection lost. Trying to reconnect...")
-    {:ok, connection_state} = connect(state.queue_name)
+    {:ok, connection_state} = connect(state.prefix <> state.queue_name)
     {:noreply, Map.merge(state, connection_state)}
   end
 
@@ -138,11 +138,11 @@ defmodule Astarte.RPC.AMQP.Server do
          {:ok, chan} <- AMQP.Channel.open(conn),
          :ok <- AMQP.Basic.qos(chan, prefetch_count: Config.amqp_prefetch_count!()),
          {:ok, _queue} <-
-           AMQP.Queue.declare(chan, queue_name, [ durable: true, arguments: Config.amqp_queue_arguments!()]),
-         {:ok, _consumer_tag} <- AMQP.Basic.consume(chan, queue_name),
+           AMQP.Queue.declare(chan, state.prefix <> state.queue_name, [ durable: true, arguments: Config.amqp_queue_arguments!()]),
+         {:ok, _consumer_tag} <- AMQP.Basic.consume(chan, state.prefix <> state.queue_name),
          # Get notifications when the chan or conn go down
          Process.monitor(chan.pid) do
-      {:ok, %{channel: chan, reply_queue: queue_name}}
+      {:ok, %{channel: chan, reply_queue: state.queue_name, prefix: state.prefix }}
     else
       {:error, reason} ->
         Logger.warn("RabbitMQ Connection error: " <> inspect(reason))
