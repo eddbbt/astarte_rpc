@@ -63,7 +63,7 @@ defmodule Astarte.RPC.Mixfile do
       {:castore, "~> 0.1.0"},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :ci], runtime: false},
-      { :uuid, "~> 1.1" } 
+      { :elixir_uuid, "~> 1.2" } 
     ]
   end
 
