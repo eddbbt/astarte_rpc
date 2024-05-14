@@ -138,11 +138,11 @@ defmodule Astarte.RPC.AMQP.Server do
          {:ok, chan} <- AMQP.Channel.open(conn),
          :ok <- AMQP.Basic.qos(chan, prefetch_count: Config.amqp_prefetch_count!()),
          {:ok, _queue} <-
-           AMQP.Queue.declare(chan, state.prefix <> state.queue_name, [ durable: true, arguments: Config.amqp_queue_arguments!()]),
-         {:ok, _consumer_tag} <- AMQP.Basic.consume(chan, state.prefix <> state.queue_name),
+           AMQP.Queue.declare(chan, queue_name, [ durable: true, arguments: Config.amqp_queue_arguments!()]),
+         {:ok, _consumer_tag} <- AMQP.Basic.consume(chan, queue_name),
          # Get notifications when the chan or conn go down
          Process.monitor(chan.pid) do
-      {:ok, %{channel: chan, reply_queue: state.queue_name, prefix: state.prefix }}
+      {:ok, %{channel: chan, reply_queue: queue_name  }}
     else
       {:error, reason} ->
         Logger.warn("RabbitMQ Connection error: " <> inspect(reason))
