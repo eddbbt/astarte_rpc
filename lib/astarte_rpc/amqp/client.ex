@@ -105,7 +105,7 @@ defmodule Astarte.RPC.AMQP.Client do
 
     prefixed_routing_key = prefix <> routing_key
 
-    AMQP.Basic.publish(chan, reply_queue, prefixed_routing_key, ser_payload)
+    AMQP.Basic.publish(chan, "", prefixed_routing_key, ser_payload)
     {:noreply, state}
   end
 
