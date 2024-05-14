@@ -176,7 +176,7 @@ defmodule Astarte.RPC.AMQP.Server do
   defp maybe_reply({:error, reason}, chan, reply_to, correlation_id, reply_queue) when is_atom(reason) do
     AMQP.Basic.publish(
       chan,
-      reply_queue,
+      "",
       reply_to,
       "error:" <> to_string(reason),
       correlation_id: correlation_id
